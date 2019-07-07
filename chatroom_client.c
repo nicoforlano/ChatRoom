@@ -52,7 +52,7 @@ void init_app(){
         gtk_main_quit();        
     }
 
-    gtk_builder_connect_signals(main_builder, NULL);
+    gtk_builder_connect_signals(main_builder, main_builder);
 
     window = GTK_WIDGET(gtk_builder_get_object(main_builder, "main_window"));
 
@@ -63,7 +63,7 @@ void init_app(){
     gtk_main();
 }
   
-void on_menu_connect_click(GtkWidget *widget, gpointer *data);
+void on_menu_connect_click(GtkWidget *widget, GtkBuilder *main_builder);
 void on_connect_btn_clicked(GtkWidget *widget, GtkBuilder *conn_window_builder);
 
 int main(int argc, char* argv[]) { 
@@ -117,44 +117,62 @@ ChatThreadData connect_with_server(char* ip_address, char* port){
 }
 
 
-void on_menu_connect_click(GtkWidget *widget, gpointer *data){
+void on_menu_connect_click(GtkWidget *widget, GtkBuilder *main_builder){
 
     printf("Clicked\n");
 
-    GError *error = NULL;
-    GtkBuilder *conn_window_builder =  gtk_builder_new();
+    GtkWidget *connection_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    GtkBox *vbox = GTK_BOX(gtk_box_new(GTK_ORIENTATION_VERTICAL, 5));
+    GtkBox *ip_box = GTK_BOX(gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5));
+    GtkLabel *ip_label = GTK_LABEL(gtk_label_new("Ip del Servidor"));
+    GtkEntry *ip_entry = GTK_ENTRY(gtk_entry_new());
+    GtkBox *port_box = GTK_BOX(gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5));
+    GtkLabel *port_label = GTK_LABEL(gtk_label_new("Puerto del Servidor"));
+    GtkEntry *port_entry = GTK_ENTRY(gtk_entry_new());
+    GtkButton *connect_btn = GTK_BUTTON(gtk_button_new_with_label("Conectar"));
 
-    gtk_builder_add_from_file(conn_window_builder, CONN_WINDOW_UI_FILE, &error);
+    //IP
+    gtk_widget_set_size_request(GTK_WIDGET(ip_label), 124, 0);
+    
+    gtk_widget_set_margin_left(GTK_WIDGET(ip_entry), 20);
+    gtk_widget_set_margin_right(GTK_WIDGET(ip_entry), 20);
 
-    if(error != NULL){
+    gtk_box_pack_start(ip_box, GTK_WIDGET(ip_label), TRUE, TRUE, 0);
+    gtk_box_pack_start(ip_box, GTK_WIDGET(ip_entry), TRUE, TRUE, 0);
 
-        g_warning("%s", error->message);
-        g_free(error);
-        exit(0);
-        
-    }
+    //PORT
+    gtk_widget_set_size_request(GTK_WIDGET(port_label), 124, 0);
+    
+    gtk_widget_set_margin_left(GTK_WIDGET(port_entry), 20);
+    gtk_widget_set_margin_right(GTK_WIDGET(port_entry), 20);
 
-    gtk_builder_connect_signals(conn_window_builder, conn_window_builder); // Send builder to all callback
+    gtk_box_pack_start(port_box, GTK_WIDGET(port_label), TRUE, TRUE, 0);
+    gtk_box_pack_start(port_box, GTK_WIDGET(port_entry), TRUE, TRUE, 0);
 
-    GtkWidget *connection_window = GTK_WIDGET(gtk_builder_get_object(conn_window_builder, "connection_window"));
-    printf("obtvop window\n");
+    //VBOX
+    gtk_box_pack_start(vbox, GTK_WIDGET(ip_box), TRUE, TRUE, 0);
+    gtk_box_pack_start(vbox, GTK_WIDGET(port_box), TRUE, TRUE, 0);
+    gtk_box_pack_start(vbox, GTK_WIDGET(connect_btn), TRUE, TRUE, 0);
+
+    //WINDOW
+    gtk_container_add(GTK_CONTAINER(connection_window), GTK_WIDGET(vbox));
+
     gtk_window_set_title(GTK_WINDOW(connection_window), "Conectar con Servidor");
-    printf("title\n");
-    gtk_widget_set_size_request(connection_window, 400, 200);
-    printf("size req\n");
-    gtk_window_set_resizable(GTK_WINDOW(connection_window), FALSE);
-    printf("resizable\n");
-    gtk_window_set_position(GTK_WINDOW(connection_window), GTK_WIN_POS_CENTER);
-    printf("posi\n");
 
-    gtk_widget_show(connection_window);
+    gtk_widget_set_size_request(connection_window, 400, 200);
+
+    gtk_window_set_resizable(GTK_WINDOW(connection_window), FALSE);
+
+    gtk_window_set_position(GTK_WINDOW(connection_window), GTK_WIN_POS_CENTER);
+
+    gtk_widget_show_all(connection_window);
 }
 
-void create_chat_threads(ChatThreadData chat_thread_data){
+void create_chat_threads(ChatThreadData chat_thread_data){  
 
     pthread_t *chat_threads = (pthread_t*) malloc(sizeof(pthread_t) * 2); // Writer and Reader thread
 
-    pthread_attr_set_
+    
 
 }
 
