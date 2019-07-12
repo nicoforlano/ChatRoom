@@ -19,6 +19,13 @@ typedef struct chat_thread_data{
 
 } ChatThreadData;
 
+typedef struct connection_request{
+
+    GtkEntry *ip_entry;
+    GtkEntry *port_entry;
+
+} ConnectionRequest;
+
 GtkBuilder *main_builder;
 
 void func(int sockfd) 
@@ -64,7 +71,8 @@ void init_app(){
 }
   
 void on_menu_connect_click(GtkWidget *widget, GtkBuilder *main_builder);
-void on_connect_btn_clicked(GtkWidget *widget, GtkBuilder *conn_window_builder);
+void on_connect_btn_clicked(GtkWidget *widget, ConnectionRequest *conn_request);
+void on_send_btn_clicked(GtkWidget *widget, ChatThreadData *chat_thread_data);
 
 int main(int argc, char* argv[]) { 
 
@@ -121,33 +129,38 @@ void on_menu_connect_click(GtkWidget *widget, GtkBuilder *main_builder){
 
     printf("Clicked\n");
 
+    ConnectionRequest *conn_request = (ConnectionRequest*)malloc(sizeof(ConnectionRequest*));
+
     GtkWidget *connection_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     GtkBox *vbox = GTK_BOX(gtk_box_new(GTK_ORIENTATION_VERTICAL, 5));
     GtkBox *ip_box = GTK_BOX(gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5));
     GtkLabel *ip_label = GTK_LABEL(gtk_label_new("Ip del Servidor"));
-    GtkEntry *ip_entry = GTK_ENTRY(gtk_entry_new());
+    conn_request->ip_entry = GTK_ENTRY(gtk_entry_new());
     GtkBox *port_box = GTK_BOX(gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5));
     GtkLabel *port_label = GTK_LABEL(gtk_label_new("Puerto del Servidor"));
-    GtkEntry *port_entry = GTK_ENTRY(gtk_entry_new());
+    conn_request->port_entry = GTK_ENTRY(gtk_entry_new());
     GtkButton *connect_btn = GTK_BUTTON(gtk_button_new_with_label("Conectar"));
 
     //IP
     gtk_widget_set_size_request(GTK_WIDGET(ip_label), 124, 0);
     
-    gtk_widget_set_margin_left(GTK_WIDGET(ip_entry), 20);
-    gtk_widget_set_margin_right(GTK_WIDGET(ip_entry), 20);
+    gtk_widget_set_margin_left(GTK_WIDGET(conn_request->ip_entry), 20);
+    gtk_widget_set_margin_right(GTK_WIDGET(conn_request->ip_entry), 20);
 
     gtk_box_pack_start(ip_box, GTK_WIDGET(ip_label), TRUE, TRUE, 0);
-    gtk_box_pack_start(ip_box, GTK_WIDGET(ip_entry), TRUE, TRUE, 0);
+    gtk_box_pack_start(ip_box, GTK_WIDGET(conn_request->ip_entry), TRUE, TRUE, 0);
 
     //PORT
     gtk_widget_set_size_request(GTK_WIDGET(port_label), 124, 0);
     
-    gtk_widget_set_margin_left(GTK_WIDGET(port_entry), 20);
-    gtk_widget_set_margin_right(GTK_WIDGET(port_entry), 20);
+    gtk_widget_set_margin_left(GTK_WIDGET(conn_request->port_entry), 20);
+    gtk_widget_set_margin_right(GTK_WIDGET(conn_request->port_entry), 20);
 
     gtk_box_pack_start(port_box, GTK_WIDGET(port_label), TRUE, TRUE, 0);
-    gtk_box_pack_start(port_box, GTK_WIDGET(port_entry), TRUE, TRUE, 0);
+    gtk_box_pack_start(port_box, GTK_WIDGET(conn_request->port_entry), TRUE, TRUE, 0);
+
+    //BUTTON
+    g_signal_connect(connect_btn, "clicked", G_CALLBACK(on_connect_btn_clicked), conn_request);
 
     //VBOX
     gtk_box_pack_start(vbox, GTK_WIDGET(ip_box), TRUE, TRUE, 0);
@@ -176,29 +189,26 @@ void create_chat_threads(ChatThreadData chat_thread_data){
 
 }
 
-void on_connect_btn_clicked(GtkWidget *widget, GtkBuilder *conn_window_builder){
+void on_connect_btn_clicked(GtkWidget *widget, ConnectionRequest *conn_request){
 
     printf("Clicked\n");
 
-    GtkEntry *server_ip_entry = GTK_ENTRY(gtk_builder_get_object(conn_window_builder, "ip_entry"));
-    GtkEntry *server_port_entry = GTK_ENTRY(gtk_builder_get_object(conn_window_builder, "port_entry"));
-
-    gchar* server_ip = gtk_entry_get_text(server_ip_entry);
-    gchar* server_port = gtk_entry_get_text(server_port_entry);
-
-    if(gtk_entry_get_text_length(server_ip_entry) == 0 || gtk_entry_get_text_length(server_port_entry) == 0){
+    if(gtk_entry_get_text_length(conn_request->ip_entry) == 0 || gtk_entry_get_text_length(conn_request->port_entry) == 0){
 
         printf("Campos vacios\n");        
         return;
     }
+
+    gchar* server_ip = gtk_entry_get_text(conn_request->ip_entry);
+    gchar* server_port = gtk_entry_get_text(conn_request->port_entry);
 
     printf("IP : %s\n", server_ip);
     printf("Port: %s\n", server_port);
 
     ChatThreadData chat_thread_data= connect_with_server(server_ip, server_port);
 
+    g_signal_connect(connect_btn, "clicked", G_CALLBACK(on_connect_btn_clicked), chat_thread_data);
 
-
-    gtk_widget_destroy(GTK_WIDGET(gtk_builder_get_object(conn_window_builder, "connection_window")));
+    //gtk_widget_destroy(GTK_WIDGET(gtk_builder_get_object(conn_window_builder, "connection_window")));
 
 }
