@@ -9,18 +9,19 @@
 #define MAX_BUFF_SIZE 512 
 #define PORT 8080 
 #define UI_FILE "chatroom_client_UI.glade"
-#define CONN_WINDOW_UI_FILE "connection_window.glade"
 
 
 typedef struct chat_thread_data{
 
     struct sockaddr_in servaddr;
     int sockfd;
+    pthread_t* chat_listener;
 
 } ChatThreadData;
 
 typedef struct connection_request{
 
+    GtkWindow *connection_window;
     GtkEntry *ip_entry;
     GtkEntry *port_entry;
 
@@ -115,7 +116,7 @@ void on_menu_connect_click(GtkWidget *widget, GtkBuilder *main_builder){
 
     ConnectionRequest *conn_request = (ConnectionRequest*)malloc(sizeof(ConnectionRequest*));
 
-    GtkWidget *connection_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    conn_request->connection_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     GtkBox *vbox = GTK_BOX(gtk_box_new(GTK_ORIENTATION_VERTICAL, 5));
     GtkBox *ip_box = GTK_BOX(gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5));
     GtkLabel *ip_label = GTK_LABEL(gtk_label_new("Ip del Servidor"));
@@ -152,25 +153,25 @@ void on_menu_connect_click(GtkWidget *widget, GtkBuilder *main_builder){
     gtk_box_pack_start(vbox, GTK_WIDGET(connect_btn), TRUE, TRUE, 0);
 
     //WINDOW
-    gtk_container_add(GTK_CONTAINER(connection_window), GTK_WIDGET(vbox));
+    gtk_container_add(GTK_CONTAINER(conn_request->connection_window), GTK_WIDGET(vbox));
 
-    gtk_window_set_title(GTK_WINDOW(connection_window), "Conectar con Servidor");
+    gtk_window_set_title(GTK_WINDOW(conn_request->connection_window), "Conectar con Servidor");
 
-    gtk_widget_set_size_request(connection_window, 400, 200);
+    gtk_widget_set_size_request(conn_request->connection_window, 400, 200);
 
-    gtk_window_set_resizable(GTK_WINDOW(connection_window), FALSE);
+    gtk_window_set_resizable(GTK_WINDOW(conn_request->connection_window), FALSE);
 
-    gtk_window_set_position(GTK_WINDOW(connection_window), GTK_WIN_POS_CENTER);
+    gtk_window_set_position(GTK_WINDOW(conn_request->connection_window), GTK_WIN_POS_CENTER);
 
-    gtk_widget_show_all(connection_window);
+    gtk_widget_show_all(conn_request->connection_window);
 }
 
-void create_chat_threads(ChatThreadData chat_thread_data){  
+void create_chat_thread(ChatThreadData *chat_thread_data){  
 
-    pthread_t *chat_threads = (pthread_t*) malloc(sizeof(pthread_t) * 2); // Writer and Reader thread
+    pthread_t *chat_threads = (pthread_t*) malloc(sizeof(pthread_t*));
 
     
-
+    
 }
 
 void on_connect_btn_clicked(GtkWidget *widget, ConnectionRequest *conn_request){
@@ -197,10 +198,11 @@ void on_connect_btn_clicked(GtkWidget *widget, ConnectionRequest *conn_request){
 
     GtkButton *send_btn = GTK_BUTTON(gtk_builder_get_object(main_builder, "send_button"));
 
-    g_signal_connect(send_btn, "clicked", G_CALLBACK(on_send_btn_clicked), chat_thread_data);
+    g_signal_connect(send_btn, "clicked", G_CALLBACK(on_send_btn_clicked), chat_thread_data); //Sends chat data to callback
 
 
-    //gtk_widget_destroy(GTK_WIDGET(gtk_builder_get_object(conn_window_builder, "connection_window")));
+
+    gtk_window_close(conn_request->connection_window);
 
 }
 
