@@ -11,13 +11,13 @@
 #define UI_FILE "chatroom_client_UI.glade"
 
 
-typedef struct chat_thread_data{
+typedef struct chat_data{
 
     struct sockaddr_in servaddr;
     int sockfd;
     pthread_t* chat_listener;
 
-} ChatThreadData;
+} ChatData;
 
 typedef struct connection_request{
 
@@ -27,15 +27,23 @@ typedef struct connection_request{
 
 } ConnectionRequest;
 
-GtkBuilder *main_builder;
+typedef struct App{
+
+    ChatData* chat_data;
+    GtkBuilder* app_builder;
+
+} App;
+
+App *app;
 
 void init_app(){
 
+    app = (App*)malloc(sizeof(App*)); // Initialize main app struct
     GtkWidget *window;
     GError *error = NULL;
-    main_builder = gtk_builder_new();
+    app->app_builder = gtk_builder_new();
     
-    gtk_builder_add_from_file(main_builder, UI_FILE, &error);
+    gtk_builder_add_from_file(app->app_builder, UI_FILE, &error);
 
     if(error != NULL){
 
@@ -44,9 +52,9 @@ void init_app(){
         gtk_main_quit();        
     }
 
-    gtk_builder_connect_signals(main_builder, main_builder);
+    gtk_builder_connect_signals(app->app_builder, NULL);
 
-    window = GTK_WIDGET(gtk_builder_get_object(main_builder, "main_window"));
+    window = GTK_WIDGET(gtk_builder_get_object(app->app_builder, "main_window"));
 
     gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);
 
@@ -55,9 +63,9 @@ void init_app(){
     gtk_main();
 }
   
-void on_menu_connect_click(GtkWidget *widget, GtkBuilder *main_builder);
+void on_menu_connect_click(GtkWidget *widget, gpointer *data);
 void on_connect_btn_clicked(GtkWidget *widget, ConnectionRequest *conn_request);
-void on_send_btn_clicked(GtkWidget *widget, ChatThreadData *chat_thread_data);
+void on_send_btn_clicked(GtkWidget *widget, gpointer *data);
 
 int main(int argc, char* argv[]) { 
 
@@ -71,29 +79,29 @@ int main(int argc, char* argv[]) {
 } 
 
 
-ChatThreadData* connect_with_server(char* ip_address, char* port){
+void connect_with_server(char* ip_address, char* port){
 
-    ChatThreadData *chat_thread_data = (ChatThreadData*) malloc(sizeof(ChatThreadData*));
+    app->chat_data = (ChatData*) malloc(sizeof(ChatData*));
 
     // socket create and varification 
-    chat_thread_data->sockfd = socket(AF_INET, SOCK_STREAM, 0); 
+    app->chat_data->sockfd = socket(AF_INET, SOCK_STREAM, 0); 
 
-    if (chat_thread_data->sockfd == -1) { 
+    if (app->chat_data->sockfd == -1) { 
         printf("socket creation failed...\n"); 
         exit(0); 
     } 
     else
         printf("Socket successfully created..\n"); 
 
-    bzero(&chat_thread_data->servaddr, sizeof(chat_thread_data->servaddr)); 
+    bzero(&app->chat_data->servaddr, sizeof(app->chat_data->servaddr)); 
   
     // assign IP, PORT 
-    chat_thread_data->servaddr.sin_family = AF_INET; 
-    chat_thread_data->servaddr.sin_addr.s_addr = inet_addr(ip_address); 
-    chat_thread_data->servaddr.sin_port = htons(atoi(port)); 
+    app->chat_data->servaddr.sin_family = AF_INET; 
+    app->chat_data->servaddr.sin_addr.s_addr = inet_addr(ip_address); 
+    app->chat_data->servaddr.sin_port = htons(atoi(port)); 
   
     // connect the client socket to server socket 
-    if (connect(chat_thread_data->sockfd, (struct sockaddr*)&chat_thread_data->servaddr, sizeof(chat_thread_data->servaddr)) != 0) { 
+    if (connect(app->chat_data->sockfd, (struct sockaddr*)&app->chat_data->servaddr, sizeof(app->chat_data->servaddr)) != 0) { 
         printf("connection with the server failed...\n"); 
         exit(0); 
     } 
@@ -106,11 +114,10 @@ ChatThreadData* connect_with_server(char* ip_address, char* port){
     // close the socket 
     close(sockfd);*/
 
-    return chat_thread_data;
 }
 
 
-void on_menu_connect_click(GtkWidget *widget, GtkBuilder *main_builder){
+void on_menu_connect_click(GtkWidget *widget, gpointer *data){
 
     printf("Clicked\n");
 
@@ -166,7 +173,7 @@ void on_menu_connect_click(GtkWidget *widget, GtkBuilder *main_builder){
     gtk_widget_show_all(conn_request->connection_window);
 }
 
-void create_chat_thread(ChatThreadData *chat_thread_data){  
+void create_chat_thread(ChatData *chat_data){  
 
     pthread_t *chat_threads = (pthread_t*) malloc(sizeof(pthread_t*));
 
@@ -177,8 +184,6 @@ void create_chat_thread(ChatThreadData *chat_thread_data){
 void on_connect_btn_clicked(GtkWidget *widget, ConnectionRequest *conn_request){
 
     printf("Clicked\n");
-
-    ChatThreadData *chat_thread_data = (ChatThreadData*) malloc(sizeof(ChatThreadData*));
 
     if(gtk_entry_get_text_length(conn_request->ip_entry) == 0 || gtk_entry_get_text_length(conn_request->port_entry) == 0){
 
@@ -192,32 +197,33 @@ void on_connect_btn_clicked(GtkWidget *widget, ConnectionRequest *conn_request){
     printf("IP : %s\n", server_ip);
     printf("Port: %s\n", server_port);
 
-    chat_thread_data = connect_with_server(server_ip, server_port);
+    connect_with_server(server_ip, server_port); // Connects to server storing useful data in app->chat_data
     
-    printf("Sock fd: %d\n", chat_thread_data->sockfd);
+    printf("Sock fd: %d\n", app->chat_data->sockfd);
 
-    GtkButton *send_btn = GTK_BUTTON(gtk_builder_get_object(main_builder, "send_button"));
+    GtkButton *send_btn = GTK_BUTTON(gtk_builder_get_object(app->app_builder, "send_button"));
 
-    g_signal_connect(send_btn, "clicked", G_CALLBACK(on_send_btn_clicked), chat_thread_data); //Sends chat data to callback
+    g_signal_connect(send_btn, "clicked", G_CALLBACK(on_send_btn_clicked), NULL);
 
 
+    //LAUNCH THREAD
 
     gtk_window_close(conn_request->connection_window);
 
 }
 
-void on_send_btn_clicked(GtkWidget *widget, ChatThreadData *chat_thread_data){
+void on_send_btn_clicked(GtkWidget *widget, gpointer *data){
 
     printf("Send click\n");
 
-    GtkEntry *msg_entry = GTK_ENTRY(gtk_builder_get_object(main_builder, "msg_entry"));
+    GtkEntry *msg_entry = GTK_ENTRY(gtk_builder_get_object(app->app_builder, "msg_entry"));
     char* msg_display[1024];
 
     if(gtk_entry_get_text_length(msg_entry) == 0){
         printf("Send vacío\n"); 
     }
 
-    GtkTextView *chat_view = GTK_TEXT_VIEW(gtk_builder_get_object(main_builder, "chatroom_view"));
+    GtkTextView *chat_view = GTK_TEXT_VIEW(gtk_builder_get_object(app->app_builder, "chatroom_view"));
     GtkTextBuffer *buffer = gtk_text_view_get_buffer(chat_view);
     GtkTextMark *mark = gtk_text_buffer_get_insert(buffer);
     GtkTextIter iter;
@@ -225,7 +231,7 @@ void on_send_btn_clicked(GtkWidget *widget, ChatThreadData *chat_thread_data){
 
     gchar *msg = gtk_entry_get_text(msg_entry); //Get msg to send
 
-    write(chat_thread_data->sockfd, (char*)msg, sizeof(msg)); // Sends the msg.
+    write(app->chat_data->sockfd, (char*)msg, sizeof(msg)); // Sends the msg.
 
     //Prepare display_msg
     strcpy(msg_display, "YO: ");
