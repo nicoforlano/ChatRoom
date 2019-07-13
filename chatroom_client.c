@@ -209,14 +209,31 @@ void on_send_btn_clicked(GtkWidget *widget, ChatThreadData *chat_thread_data){
     printf("Send click\n");
 
     GtkEntry *msg_entry = GTK_ENTRY(gtk_builder_get_object(main_builder, "msg_entry"));
+    char* msg_display[1024];
 
     if(gtk_entry_get_text_length(msg_entry) == 0){
         printf("Send vacío\n"); 
     }
 
-    gchar *buff = gtk_entry_get_text(msg_entry); 
-    printf("%s\n", buff);
-    printf("SOcket fd: %d\n", chat_thread_data->sockfd);
+    GtkTextView *chat_view = GTK_TEXT_VIEW(gtk_builder_get_object(main_builder, "chatroom_view"));
+    GtkTextBuffer *buffer = gtk_text_view_get_buffer(chat_view);
+    GtkTextMark *mark = gtk_text_buffer_get_insert(buffer);
+    GtkTextIter iter;
+    gtk_text_buffer_get_iter_at_mark(buffer, &iter, mark); //Initializes iter with the current positio of mark.
 
-    write(chat_thread_data->sockfd, (char*)buff, sizeof(buff));
+    gchar *msg = gtk_entry_get_text(msg_entry); //Get msg to send
+
+    write(chat_thread_data->sockfd, (char*)msg, sizeof(msg)); // Sends the msg.
+
+    //Prepare display_msg
+    strcpy(msg_display, "YO: ");
+
+    strcat(msg_display, msg);
+
+    // Insert msg in GTextView(chat view)
+    gtk_text_buffer_insert(buffer, &iter, msg_display, -1);
+    gtk_text_buffer_insert(buffer, &iter, "\n", 1); //Inserts a new line
+
+    gtk_entry_set_text(msg_entry, ""); //Clears the msg entry..
+
 }

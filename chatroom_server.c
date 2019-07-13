@@ -123,7 +123,7 @@ void* client_thread(void* param){
 	while(1){
 		
 		printf("Wating for msg\n");
-		status = recv(server->connections[client->conn_id], buffer, BUFFER_LENGTH, 0);
+		status = read(server->connections[client->conn_id], buffer, BUFFER_LENGTH);
 		
 		printf("Satus: %d\n", status);
 
