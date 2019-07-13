@@ -6,8 +6,7 @@
 #include <sys/types.h>
 #include <netdb.h>
 #include <string.h>
-
-
+#define HELLO_MSG "Bienvenido al chatroom!"
 #define MAX_CLIENTS 10
 #define PORT 8080
 #define BUFFER_LENGTH 1024
@@ -117,8 +116,10 @@ void* client_thread(void* param){
 	char* buffer[BUFFER_LENGTH];
 	int status;
 
-
 	printf("Client sock fd %d\n", server->connections[client->conn_id]);
+	printf("Sending hello\n");
+
+	write(server->connection[client->conn_id], HELLO_MSG, sizeof(HELLO_MSG));
 
 	while(1){
 		

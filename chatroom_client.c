@@ -1,4 +1,3 @@
-
 #include <gtk/gtk.h>
 #include <pthread.h>
 #include <netdb.h> 
@@ -173,12 +172,22 @@ void on_menu_connect_click(GtkWidget *widget, gpointer *data){
     gtk_widget_show_all(conn_request->connection_window);
 }
 
-void create_chat_thread(ChatData *chat_data){  
+void* chat_listener_thread(void* param){
 
-    pthread_t *chat_threads = (pthread_t*) malloc(sizeof(pthread_t*));
+    printf("Chat thread initialized\n");
 
     
+}
+
+void create_chat_thread(){  
+
+    app->chat_data->chat_listener = (pthread_t*) malloc(sizeof(pthread_t*));
+    pthread_attr_t atributes;
+    pthread_attr_init(&atributes);
+    pthread_attr_setdetachstate(&atributes, PTHREAD_CREATE_JOINABLE);
     
+    pthread_create(&app->chat_data->chat_listener, &atributes, chat_listener_thread, NULL);
+
 }
 
 void on_connect_btn_clicked(GtkWidget *widget, ConnectionRequest *conn_request){
@@ -205,8 +214,7 @@ void on_connect_btn_clicked(GtkWidget *widget, ConnectionRequest *conn_request){
 
     g_signal_connect(send_btn, "clicked", G_CALLBACK(on_send_btn_clicked), NULL);
 
-
-    //LAUNCH THREAD
+    create_chat_thread();
 
     gtk_window_close(conn_request->connection_window);
 
