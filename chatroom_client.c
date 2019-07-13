@@ -6,7 +6,7 @@
 #include <stdlib.h> 
 #include <string.h> 
 #include <sys/socket.h> 
-#define MAX_BUFF_SIZE 80 
+#define MAX_BUFF_SIZE 512 
 #define PORT 8080 
 #define UI_FILE "chatroom_client_UI.glade"
 #define CONN_WINDOW_UI_FILE "connection_window.glade"
@@ -27,22 +27,6 @@ typedef struct connection_request{
 } ConnectionRequest;
 
 GtkBuilder *main_builder;
-
-void func(int sockfd) 
-{ 
-    char buff[MAX_BUFF_SIZE]; 
-    int n;
-
-    for (;;) { 
-        bzero(buff, sizeof(buff)); 
-        printf("Enter the string : "); 
-        n = 0; 
-        while ((buff[n++] = getchar()) != '\n') 
-            ; 
-        write(sockfd, buff, sizeof(buff)); 
-        
-    } 
-}
 
 void init_app(){
 
@@ -86,29 +70,29 @@ int main(int argc, char* argv[]) {
 } 
 
 
-ChatThreadData connect_with_server(char* ip_address, char* port){
+ChatThreadData* connect_with_server(char* ip_address, char* port){
 
-    ChatThreadData chat_thread_data;
+    ChatThreadData *chat_thread_data = (ChatThreadData*) malloc(sizeof(ChatThreadData*));
 
     // socket create and varification 
-    chat_thread_data.sockfd = socket(AF_INET, SOCK_STREAM, 0); 
+    chat_thread_data->sockfd = socket(AF_INET, SOCK_STREAM, 0); 
 
-    if (chat_thread_data.sockfd == -1) { 
+    if (chat_thread_data->sockfd == -1) { 
         printf("socket creation failed...\n"); 
         exit(0); 
     } 
     else
         printf("Socket successfully created..\n"); 
 
-    bzero(&chat_thread_data.servaddr, sizeof(chat_thread_data.servaddr)); 
+    bzero(&chat_thread_data->servaddr, sizeof(chat_thread_data->servaddr)); 
   
     // assign IP, PORT 
-    chat_thread_data.servaddr.sin_family = AF_INET; 
-    chat_thread_data.servaddr.sin_addr.s_addr = inet_addr(ip_address); 
-    chat_thread_data.servaddr.sin_port = htons(atoi(port)); 
+    chat_thread_data->servaddr.sin_family = AF_INET; 
+    chat_thread_data->servaddr.sin_addr.s_addr = inet_addr(ip_address); 
+    chat_thread_data->servaddr.sin_port = htons(atoi(port)); 
   
     // connect the client socket to server socket 
-    if (connect(chat_thread_data.sockfd, (struct sockaddr*)&chat_thread_data.servaddr, sizeof(chat_thread_data.servaddr)) != 0) { 
+    if (connect(chat_thread_data->sockfd, (struct sockaddr*)&chat_thread_data->servaddr, sizeof(chat_thread_data->servaddr)) != 0) { 
         printf("connection with the server failed...\n"); 
         exit(0); 
     } 
@@ -193,6 +177,8 @@ void on_connect_btn_clicked(GtkWidget *widget, ConnectionRequest *conn_request){
 
     printf("Clicked\n");
 
+    ChatThreadData *chat_thread_data = (ChatThreadData*) malloc(sizeof(ChatThreadData*));
+
     if(gtk_entry_get_text_length(conn_request->ip_entry) == 0 || gtk_entry_get_text_length(conn_request->port_entry) == 0){
 
         printf("Campos vacios\n");        
@@ -205,10 +191,32 @@ void on_connect_btn_clicked(GtkWidget *widget, ConnectionRequest *conn_request){
     printf("IP : %s\n", server_ip);
     printf("Port: %s\n", server_port);
 
-    ChatThreadData chat_thread_data= connect_with_server(server_ip, server_port);
+    chat_thread_data = connect_with_server(server_ip, server_port);
+    
+    printf("Sock fd: %d\n", chat_thread_data->sockfd);
 
-    g_signal_connect(connect_btn, "clicked", G_CALLBACK(on_connect_btn_clicked), chat_thread_data);
+    GtkButton *send_btn = GTK_BUTTON(gtk_builder_get_object(main_builder, "send_button"));
+
+    g_signal_connect(send_btn, "clicked", G_CALLBACK(on_send_btn_clicked), chat_thread_data);
+
 
     //gtk_widget_destroy(GTK_WIDGET(gtk_builder_get_object(conn_window_builder, "connection_window")));
 
+}
+
+void on_send_btn_clicked(GtkWidget *widget, ChatThreadData *chat_thread_data){
+
+    printf("Send click\n");
+
+    GtkEntry *msg_entry = GTK_ENTRY(gtk_builder_get_object(main_builder, "msg_entry"));
+
+    if(gtk_entry_get_text_length(msg_entry) == 0){
+        printf("Send vacío\n"); 
+    }
+
+    gchar *buff = gtk_entry_get_text(msg_entry); 
+    printf("%s\n", buff);
+    printf("SOcket fd: %d\n", chat_thread_data->sockfd);
+
+    write(chat_thread_data->sockfd, (char*)buff, sizeof(buff));
 }
