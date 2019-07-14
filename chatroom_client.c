@@ -6,7 +6,6 @@
 #include <string.h> 
 #include <sys/socket.h> 
 #include <arpa/inet.h>
-#define MAX_BUFF_SIZE 512 
 #define PORT 8080 
 #define UI_FILE "chatroom_client_UI.glade"
 #define MAX_MSG_LENGTH 256
@@ -40,23 +39,16 @@ void init_app(){
 
     app = (App*)malloc(sizeof(App*)); // Initialize main app struct
     GtkWidget *window;
-    GError *error = NULL;
-    app->app_builder = gtk_builder_new();
     
-    gtk_builder_add_from_file(app->app_builder, UI_FILE, &error);
+    GtkBuilder* builder = gtk_builder_new_from_file(UI_FILE);
 
-    if(error != NULL){
+    gtk_builder_connect_signals(builder, NULL);
 
-        g_warning("%s", error->message);
-        g_free(error);
-        gtk_main_quit();        
-    }
-
-    gtk_builder_connect_signals(app->app_builder, NULL);
-
-    window = GTK_WIDGET(gtk_builder_get_object(app->app_builder, "main_window"));
+    window = GTK_WIDGET(gtk_builder_get_object(builder, "main_window"));
 
     gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);
+
+    app->app_builder = builder;
 
     gtk_widget_show(window);
 
@@ -74,6 +66,9 @@ int main(int argc, char* argv[]) {
     gtk_init(&argc, &argv);
 
     init_app();
+
+    //free(app->chat_data);
+    free(app);
 
     return 0;
 } 
@@ -119,7 +114,7 @@ void connect_with_server(char* ip_address, char* port){
 
 void on_menu_connect_click(GtkWidget *widget, gpointer *data){
 
-    printf("Clicked\n");
+    printf("Clicked menu connect\n");
 
     ConnectionRequest *conn_request = (ConnectionRequest*)malloc(sizeof(ConnectionRequest*));
 
@@ -177,14 +172,32 @@ void* chat_listener_thread(void* param){
 
     printf("Chat thread initialized\n");
 
-    pthread_exit((void*) "FIN");
+    int status = 1;
+    char msg_buffer[MAX_MSG_LENGTH];
+
+    while(status != 0){
+        
+        printf("Waiting msg\n");
+
+        status = read(app->chat_data->sockfd, &msg_buffer, MAX_MSG_LENGTH);
+
+        printf("RECV: %s\n", msg_buffer);        
+    }
+
+    printf("Connection closed\n");
+    
+    free(app->chat_data->chat_listener);
+
+    pthread_exit((void*) 0);
 }
 
 void create_chat_thread(){  
 
-    app->chat_data->chat_listener = (pthread_t*) malloc(sizeof(pthread_t*));
-    
-    pthread_create(app->chat_data->chat_listener, NULL, chat_listener_thread, NULL);
+    app->chat_data->chat_listener = (pthread_t*) malloc(sizeof(pthread_t));
+    pthread_attr_t atributes;
+    pthread_attr_init(&atributes);
+    pthread_attr_setdetachstate(&atributes, PTHREAD_CREATE_DETACHED);    
+    pthread_create(app->chat_data->chat_listener, &atributes, chat_listener_thread, NULL);
 
 }
 
@@ -195,7 +208,7 @@ void on_connect_btn_clicked(GtkWidget *widget, ConnectionRequest *conn_request){
     if(gtk_entry_get_text_length(conn_request->ip_entry) == 0 || gtk_entry_get_text_length(conn_request->port_entry) == 0){
 
         printf("Campos vacios\n");        
-        return;
+        return; 
     }
 
     const gchar* server_ip = gtk_entry_get_text(conn_request->ip_entry);
@@ -210,13 +223,14 @@ void on_connect_btn_clicked(GtkWidget *widget, ConnectionRequest *conn_request){
 
     GtkButton *send_btn = GTK_BUTTON(gtk_builder_get_object(app->app_builder, "send_button"));
 
-    g_signal_connect(send_btn, "clicked", G_CALLBACK(on_send_btn_clicked), NULL);
+    g_signal_connect(send_btn, "clicked", G_CALLBACK(on_send_btn_clicked), NULL); // Connect clicked event on send button to callback
 
-    //create_chat_thread();
+    create_chat_thread();
 
     printf("Closing conn window\n");
     gtk_window_close(conn_request->connection_window);
 
+    free(conn_request);
 }
 
 void on_send_btn_clicked(GtkWidget *widget, gpointer *data){
@@ -227,7 +241,8 @@ void on_send_btn_clicked(GtkWidget *widget, gpointer *data){
     char msg_display[1024];
 
     if(gtk_entry_get_text_length(msg_entry) == 0){
-        printf("Send vacío\n"); 
+        printf("Send vacío\n");
+        return;
     }
 
     GtkTextView *chat_view = GTK_TEXT_VIEW(gtk_builder_get_object(app->app_builder, "chatroom_view"));

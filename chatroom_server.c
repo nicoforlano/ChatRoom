@@ -9,7 +9,7 @@
 #define HELLO_MSG "Bienvenido al chatroom!"
 #define MAX_CLIENTS 10
 #define PORT 8080
-#define BUFFER_LENGTH 1024
+#define MAX_BUFFER_LENGTH 256
 
 typedef struct server_data{
 
@@ -113,28 +113,19 @@ void* client_thread(void* param){
 	client_data* client = (client_data*) param;
 	server_data* server = client->server;
 
-	char* buffer[BUFFER_LENGTH];
-	int msg_size;
-	int chars_read;
+	char* buffer[MAX_BUFFER_LENGTH];
 	int status;
 
 	printf("Client sock fd %d\n", server->connections[client->conn_id]);
 	printf("Sending hello\n");
 
-	write(server->connections[client->conn_id], sizeof(HELLO_MSG), sizeof(int));
 	write(server->connections[client->conn_id], HELLO_MSG, sizeof(HELLO_MSG));
 
 	while(1){
 		
 		printf("Wating for msg\n");
-		
-		chars_read = 0;
 
-		read(server->connections[client->conn_id], &msg_size, sizeof(int)); //Read the incoming msg size.
-		
-		printf("Msg size %d\n", msg_size);
-
-		status = read(server->connections[client->conn_id], buffer, BUFFER_LENGTH);
+		status = read(server->connections[client->conn_id], buffer, MAX_BUFFER_LENGTH);
 		
 		printf("Satus: %d\n", status);
 
