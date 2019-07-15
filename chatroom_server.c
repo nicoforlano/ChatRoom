@@ -6,7 +6,7 @@
 #include <sys/types.h>
 #include <netdb.h>
 #include <string.h>
-#define HELLO_MSG "Bienvenido al chatroom!"
+#define HELLO_MSG "SERVER: Bienvenido al chatroom!"
 #define MAX_CLIENTS 10
 #define PORT 8080
 #define MAX_BUFFER_LENGTH 256
