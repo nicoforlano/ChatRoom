@@ -190,7 +190,9 @@ void* chat_listener_thread(void* param){
 
         update_chat_view(msg_buffer);
 
-        printf("RECV: %s\n", msg_buffer);        
+        printf("RECV: %s\n", msg_buffer);
+
+        bzero(msg_buffer, MAX_MSG_LENGTH);
     }
 
     printf("Connection closed\n");
@@ -206,7 +208,7 @@ void create_chat_thread(){
     chat_data->chat_listener = (pthread_t*) malloc(sizeof(pthread_t));
     pthread_attr_t atributes;
     pthread_attr_init(&atributes);
-    pthread_attr_setdetachstate(&atributes, PTHREAD_CREATE_DETACHED);    
+    pthread_attr_setdetachstate(&atributes, PTHREAD_CREATE_DETACHED); //Creates detached thread that frees resources when finish   
     pthread_create(chat_data->chat_listener, &atributes, chat_listener_thread, NULL);
 
 }
@@ -268,5 +270,5 @@ void on_send_btn_clicked(GtkWidget *widget, gpointer *data){
 
     gtk_entry_set_text(msg_entry, ""); //Clears the msg entry..
 
-    //free(msg_display);
+    free(msg_display);
 }
