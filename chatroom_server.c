@@ -7,6 +7,7 @@
 #include <netdb.h>
 #include <string.h>
 #define HELLO_MSG "SERVER: Bienvenido al chatroom!"
+#define CLI_DESC_MSG "%s se ha desconectado"
 #define MAX_CLIENTS 10
 #define PORT 8080
 #define MAX_BUFFER_LENGTH 256
@@ -52,8 +53,6 @@ int main(int argc, char const *argv[])
 	while(1){
 
 		printf("Accepting client connections\n");
-		
-		printf("%d\n", server.sockfd);
 
 		connfd = accept(server.sockfd, (struct sockaddr*) &client_addr, &cli_addr_size);
 
@@ -87,7 +86,7 @@ void init_server(server_data* server){
 	server->sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	printf("%d\n", server->sockfd);
 	if(server->sockfd == -1){
-		printf("no se pud crear el socket");
+		printf("> Socket no pudo ser creado");
 		exit(0);
 	}
 
@@ -96,15 +95,12 @@ void init_server(server_data* server){
 	server->server_addr.sin_port = htons(PORT);
 
 	if(bind(server->sockfd, (struct sockaddr*) &server->server_addr, sizeof(server->server_addr)) != 0){
-		printf("SOcket bind failed\n");
+		printf("> Falló el socket bind\n");
 		exit(0);
 	}
 
-	printf("SOcket binded!\n");
-
-
 	if(listen(server->sockfd, MAX_CLIENTS) != 0){
-		printf("Listen failed\n");
+		printf("> Falló listen() del socket.\n");
 		exit(0);
 	}
 
@@ -150,17 +146,15 @@ void* client_thread(void* param){
 		bzero(buffer, MAX_BUFFER_LENGTH);
 
 		status = read(server->connections[client->conn_id], buffer, MAX_BUFFER_LENGTH);
-		
-		printf("Satus: %d\n", status);
 
 		if(status == 0){
-			printf("Client %d closed connection\n", client->conn_id);
+			sprintf(buffer, CLI_DESC_MSG, client->host); 
+			broadcast_message(buffer, client, server); //Notifies connections that client has disconected
 			server->active_connections--;
 			free(buffer);
 			return 0;
 		}
 
-		printf("Bradcasting msg\n");
 		broadcast_message(buffer, client, server);
 		printf("CONN %d %s: %s\n", client->conn_id, "", buffer);
 
