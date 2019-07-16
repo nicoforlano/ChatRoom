@@ -112,11 +112,11 @@
             <property name="can_focus">False</property>
             <property name="margin_top">15</property>
             <child>
-              <object class="GtkLabel" id="server_ip_label">
+              <object class="GtkLabel" id="server_label_1">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="ypad">7</property>
-                <property name="label" translatable="yes">IP Servidor: No conectado</property>
+                <property name="label" translatable="yes">IP Servidor:</property>
                 <property name="lines">5</property>
               </object>
               <packing>
@@ -126,16 +126,40 @@
               </packing>
             </child>
             <child>
-              <object class="GtkLabel" id="server_port_label">
+              <object class="GtkLabel" id="server_ip_label">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="ypad">7</property>
-                <property name="label" translatable="yes">Puerto Servidor: No conectado</property>
+                <property name="label" translatable="yes">No Conectado</property>
               </object>
               <packing>
                 <property name="expand">True</property>
                 <property name="fill">True</property>
                 <property name="position">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="server_label_2">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="ypad">7</property>
+                <property name="label" translatable="yes">Puerto Servidor:</property>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="server_port_label">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">No Conectado</property>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">3</property>
               </packing>
             </child>
           </object>
