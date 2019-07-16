@@ -224,8 +224,7 @@ void create_chat_thread(){
     pthread_attr_t atributes;
     pthread_attr_init(&atributes);
     pthread_attr_setdetachstate(&atributes, PTHREAD_CREATE_DETACHED); //Creates detached thread that frees resources when finish   
-    int status = pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
-    printf("Stat th: %d\n",status );
+    pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL); //Sets cancel type to asynchronous --> canceled at any time
     pthread_create(chat_data->chat_listener, &atributes, chat_listener_thread, NULL);
 
 }
@@ -256,8 +255,10 @@ void on_connect_btn_clicked(GtkWidget *widget, ConnectionRequest *conn_request){
 
     create_chat_thread();
 
-    printf("Closing conn window\n");
     gtk_window_close(conn_request->connection_window);
+
+    gtk_widget_set_sensitive(GTK_WIDGET(gtk_builder_get_object(app_builder, "connect_menu_item")), FALSE); //Disables Connect btn
+    gtk_widget_set_sensitive(GTK_WIDGET(gtk_builder_get_object(app_builder, "disconnect_menu_item")), TRUE); //Enables Disconnect btn
 
     free(conn_request);
 }
@@ -271,6 +272,9 @@ void on_disconnect_btn_clicked(GtkWidget *widget, gpointer *data){
     close(chat_data->sockfd); // Closes connection
 
     clear_chat_view();
+
+    gtk_widget_set_sensitive(GTK_WIDGET(gtk_builder_get_object(app_builder, "connect_menu_item")), TRUE); //Enabled Connect btn
+    gtk_widget_set_sensitive(GTK_WIDGET(gtk_builder_get_object(app_builder, "disconnect_menu_item")), FALSE); //Disables Disconnect btn
 
     printf("Connection closed\n");
 }
