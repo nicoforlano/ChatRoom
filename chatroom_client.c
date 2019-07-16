@@ -48,6 +48,7 @@ void init_app(){
   
 void on_menu_connect_click(GtkWidget *widget, gpointer *data);
 void on_connect_btn_clicked(GtkWidget *widget, ConnectionRequest *conn_request);
+void on_disconnect_btn_clicked(GtkWidget *widget, gpointer *data);
 void on_send_btn_clicked(GtkWidget *widget, gpointer *data);
 
 int main(int argc, char* argv[]) { 
@@ -173,6 +174,20 @@ void update_chat_view(char* msg_display){
     gtk_text_buffer_insert(buffer, &iter, "\n", 1); //Inserts a new line
 }
 
+void clear_chat_view(){
+
+    GtkTextIter* start = malloc(sizeof(GtkTextIter));
+    GtkTextIter* end = malloc(sizeof(GtkTextIter));
+
+    GtkTextView *chat_view = GTK_TEXT_VIEW(gtk_builder_get_object(app_builder, "chatroom_view"));
+    GtkTextBuffer *buffer = gtk_text_view_get_buffer(chat_view);
+    gtk_text_buffer_get_bounds(buffer, start, end);
+    gtk_text_buffer_delete(buffer, start, end);
+
+    free(start);
+    free(end);
+}
+
 void* chat_listener_thread(void* param){
 
     printf("Chat thread initialized\n");
@@ -209,6 +224,8 @@ void create_chat_thread(){
     pthread_attr_t atributes;
     pthread_attr_init(&atributes);
     pthread_attr_setdetachstate(&atributes, PTHREAD_CREATE_DETACHED); //Creates detached thread that frees resources when finish   
+    int status = pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+    printf("Stat th: %d\n",status );
     pthread_create(chat_data->chat_listener, &atributes, chat_listener_thread, NULL);
 
 }
@@ -243,6 +260,19 @@ void on_connect_btn_clicked(GtkWidget *widget, ConnectionRequest *conn_request){
     gtk_window_close(conn_request->connection_window);
 
     free(conn_request);
+}
+
+void on_disconnect_btn_clicked(GtkWidget *widget, gpointer *data){
+
+    printf("Disconnect clicked\n");
+
+    pthread_cancel(*chat_data->chat_listener); // Cancels thread listening incoming msgs.
+
+    close(chat_data->sockfd); // Closes connection
+
+    clear_chat_view();
+
+    printf("Connection closed\n");
 }
 
 void on_send_btn_clicked(GtkWidget *widget, gpointer *data){
