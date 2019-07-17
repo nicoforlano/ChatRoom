@@ -66,20 +66,51 @@ int main(int argc, char* argv[]) {
     return 0;
 } 
 
+void close_connection_failed_dialog(GtkWidget* widget, gint response_id, GtkDialog *dialog){
+    
+    gtk_widget_destroy(GTK_WIDGET(dialog));
 
-void connect_with_server(char* ip_address, char* port){
+}
+
+void show_connection_failed_dialog(){
+
+    GtkLabel* label;
+    GtkWidget* content_area;
+    GtkDialog* dialog;
+    GtkDialogFlags flags = GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT;
+
+    dialog = GTK_DIALOG(gtk_dialog_new_with_buttons("Falló Conexión con el Servidor", GTK_WINDOW(gtk_builder_get_object(app_builder, "main_window")),
+                                                        flags, GTK_STOCK_OK, GTK_RESPONSE_OK, NULL));
+
+    content_area = gtk_dialog_get_content_area(dialog);
+
+    label = GTK_LABEL(gtk_label_new("Ha ocurrido un fallo al conectar con el servidor.\nCorrobore que la IP y el puerto sean correctos."));   
+
+    gtk_container_add(GTK_CONTAINER(content_area), GTK_WIDGET(label));
+
+    g_signal_connect(dialog, "response", G_CALLBACK(close_connection_failed_dialog), dialog);
+
+    gtk_widget_set_size_request(GTK_WIDGET(dialog), 400, 200);
+
+    gtk_window_set_resizable(GTK_WINDOW(dialog), FALSE);
+
+    gtk_window_set_position(GTK_WINDOW(dialog), GTK_WIN_POS_CENTER);
+
+    gtk_widget_show_all(GTK_WIDGET(dialog));
+
+}
+
+gboolean connect_with_server(char* ip_address, char* port){
 
     chat_data = malloc(sizeof(ChatData));
 
-    // socket create and varification 
-    chat_data->sockfd = socket(AF_INET, SOCK_STREAM, 0); 
+    // socket create and verification 
+    chat_data->sockfd = socket(AF_INET, SOCK_STREAM, 0);    
 
     if (chat_data->sockfd == -1) { 
         printf("socket creation failed...\n"); 
         exit(0); 
-    } 
-    else
-        printf("Socket successfully created..\n"); 
+    }
 
     bzero(&chat_data->servaddr, sizeof(chat_data->servaddr)); 
   
@@ -90,18 +121,11 @@ void connect_with_server(char* ip_address, char* port){
   
     // connect the client socket to server socket 
     if (connect(chat_data->sockfd, (struct sockaddr*)&chat_data->servaddr, sizeof(chat_data->servaddr)) != 0) { 
-        printf("connection with the server failed...\n"); 
-        exit(0); 
-    } 
-    else
-        printf("connected to the server..\n"); 
-  
-    /*// function for chat 
-    func(sockfd); 
-  
-    // close the socket 
-    close(sockfd);*/
+        show_connection_failed_dialog();
+        return FALSE;
+    }
 
+    return TRUE;
 }
 
 
@@ -245,7 +269,11 @@ void on_connect_btn_clicked(GtkWidget *widget, ConnectionRequest *conn_request){
     printf("IP : %s\n", server_ip);
     printf("Port: %s\n", server_port);
 
-    connect_with_server((char*)server_ip, (char*)server_port); // Connects to server storing useful data in chat_data
+    // Connects to server storing useful data in chat_data
+    if(!connect_with_server((char*)server_ip, (char*)server_port)){
+        gtk_window_close(conn_request->connection_window);
+        return;
+    }
     
     printf("Sock fd: %d\n", chat_data->sockfd);
 
@@ -266,8 +294,6 @@ void on_connect_btn_clicked(GtkWidget *widget, ConnectionRequest *conn_request){
 }
 
 void on_disconnect_btn_clicked(GtkWidget *widget, gpointer *data){
-
-    printf("Disconnect clicked\n");
 
     pthread_cancel(*chat_data->chat_listener); // Cancels thread listening incoming msgs.
 
