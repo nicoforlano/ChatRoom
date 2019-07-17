@@ -14,37 +14,37 @@
 #define PORT 8080
 #define MAX_BUFFER_LENGTH 256
 
-typedef struct server_data{
+typedef struct ServerData{
 
 	int connections[MAX_CLIENTS];
 	int active_connections;
 	int sockfd;
 	struct sockaddr_in server_addr;
 
-} server_data;
+} ServerData;
 
-typedef struct client_data{
+typedef struct ClientData{
 
-	server_data *server;
+	ServerData *server;
 	int conn_id;
 	struct sockaddr client_addr;
 	char host[100];
 	char service[20];
 
-} client_data;
+} ClientData;
 
-void init_server(server_data* server);
+void init_server(ServerData* server);
 void* client_thread(void* param);
 
 int main(int argc, char const *argv[])
 {
 		
-	server_data server;
+	ServerData server;
 	int connfd;
 	socklen_t cli_addr_size;
 	struct sockaddr client_addr;
 	pthread_t* client_threads = (pthread_t*) malloc(sizeof(pthread_t*) * MAX_CLIENTS);
-	client_data *clients = malloc(sizeof(client_data) * MAX_CLIENTS);
+	ClientData *clients = malloc(sizeof(ClientData) * MAX_CLIENTS);
 
 	server.active_connections = 0;
 
@@ -54,7 +54,7 @@ int main(int argc, char const *argv[])
 
 	while(1){
 
-		printf("Accepting client connections\n");
+		printf("> Servidor listo para recibir conexiones.\n");
 
 		connfd = accept(server.sockfd, (struct sockaddr*) &client_addr, &cli_addr_size);
 
@@ -83,7 +83,7 @@ int main(int argc, char const *argv[])
 	return 0;
 }
 
-void init_server(server_data* server){
+void init_server(ServerData* server){
 
 	server->sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	printf("%d\n", server->sockfd);
@@ -105,12 +105,9 @@ void init_server(server_data* server){
 		printf("> Falló listen() del socket.\n");
 		exit(0);
 	}
-
-	printf("Server ready to listen\n");
-
 }
 
-void broadcast_message(char* msg, client_data* client, server_data* server){
+void broadcast_message(char* msg, ClientData* client, ServerData* server){
 
 	char* msg_to_send = malloc(MAX_BUFFER_LENGTH);
 	//Prepare msg -> <hostname>: <msg>
@@ -130,20 +127,15 @@ void broadcast_message(char* msg, client_data* client, server_data* server){
 
 void* client_thread(void* param){
 
-	client_data* client = (client_data*) param;
-	server_data* server = client->server;
+	ClientData* client = (ClientData*) param;
+	ServerData* server = client->server;
 
 	char* buffer = malloc(MAX_BUFFER_LENGTH);
 	int status;
 
-	printf("Client sock fd %d\n", server->connections[client->conn_id]);
-	printf("Sending hello\n");
-
 	write(server->connections[client->conn_id], HELLO_MSG, sizeof(HELLO_MSG));
 
 	while(1){
-		
-		printf("Wating for msg\n");
 
 		bzero(buffer, MAX_BUFFER_LENGTH);
 

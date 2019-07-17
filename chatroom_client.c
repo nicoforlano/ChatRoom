@@ -80,7 +80,7 @@ void show_connection_failed_dialog(){
     GtkDialogFlags flags = GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT;
 
     dialog = GTK_DIALOG(gtk_dialog_new_with_buttons("Falló Conexión con el Servidor", GTK_WINDOW(gtk_builder_get_object(app_builder, "main_window")),
-                                                        flags, GTK_STOCK_OK, GTK_RESPONSE_OK, NULL));
+                                                        flags, "_OK", GTK_RESPONSE_OK, NULL));
 
     content_area = gtk_dialog_get_content_area(dialog);
 
