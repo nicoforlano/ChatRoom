@@ -289,6 +289,7 @@ void on_connect_btn_clicked(GtkWidget *widget, ConnectionRequest *conn_request){
     gtk_label_set_text(GTK_LABEL(gtk_builder_get_object(app_builder, "server_port_label")), server_port); //Show server port on label
     gtk_widget_set_sensitive(GTK_WIDGET(gtk_builder_get_object(app_builder, "connect_menu_item")), FALSE); //Disables Connect btn
     gtk_widget_set_sensitive(GTK_WIDGET(gtk_builder_get_object(app_builder, "disconnect_menu_item")), TRUE); //Enables Disconnect btn
+    gtk_widget_set_sensitive(GTK_WIDGET(gtk_builder_get_object(app_builder, "send_button")), TRUE); //Enables Send btn
 
     free(conn_request);
 }
@@ -305,6 +306,7 @@ void on_disconnect_btn_clicked(GtkWidget *widget, gpointer *data){
     gtk_label_set_text(GTK_LABEL(gtk_builder_get_object(app_builder, "server_port_label")), "No Conectado");
     gtk_widget_set_sensitive(GTK_WIDGET(gtk_builder_get_object(app_builder, "connect_menu_item")), TRUE); //Enabled Connect btn
     gtk_widget_set_sensitive(GTK_WIDGET(gtk_builder_get_object(app_builder, "disconnect_menu_item")), FALSE); //Disables Disconnect btn
+    gtk_widget_set_sensitive(GTK_WIDGET(gtk_builder_get_object(app_builder, "send_button")), FALSE); //Disables Send btn
 
     printf("Connection closed\n");
 }
