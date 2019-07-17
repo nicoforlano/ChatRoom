@@ -5,7 +5,9 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netdb.h>
+#include <strings.h>
 #include <string.h>
+#include <unistd.h>
 #define HELLO_MSG "SERVER: Bienvenido al chatroom!"
 #define CLI_DESC_MSG "%s se ha desconectado"
 #define MAX_CLIENTS 10
@@ -61,13 +63,13 @@ int main(int argc, char const *argv[])
 			exit(0);
 		}
 
-		printf("Recieved client conn %d\n", connfd);
+		printf("> Recibida conexión de cliente. %d\n", connfd);
 
 		clients[server.active_connections].conn_id = server.active_connections;
 		clients[server.active_connections].server = &server;
 		clients[server.active_connections].client_addr = client_addr;
-		getnameinfo(&client_addr, sizeof client_addr, &clients[server.active_connections].host, 
-						sizeof clients[server.active_connections].host, &clients[server.active_connections].service,
+		getnameinfo(&client_addr, sizeof client_addr, (char*)clients[server.active_connections].host, 
+						sizeof clients[server.active_connections].host, (char*)clients[server.active_connections].service,
 						sizeof clients[server.active_connections].service, 0); // Gets hostname and service info
 
 		pthread_create(&client_threads[server.active_connections], NULL, client_thread, &clients[server.active_connections]);
