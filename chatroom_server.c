@@ -16,9 +16,9 @@ int main(int argc, char const *argv[])
 
 	cli_addr_size = sizeof(client_addr);
 
-	while(1){
+	printf("> Servidor listo para recibir conexiones.\n");
 
-		printf("> Servidor listo para recibir conexiones.\n");
+	while(1){
 
 		connfd = accept(server.sockfd, (struct sockaddr*) &client_addr, &cli_addr_size);
 
@@ -27,7 +27,7 @@ int main(int argc, char const *argv[])
 			exit(0);
 		}
 
-		printf("> Recibida conexión de cliente. %d\n", connfd);
+		printf("> Recibida conexión de cliente. SockFD: %d\n", connfd);
 
 		clients[server.active_connections].conn_id = server.active_connections;
 		clients[server.active_connections].server = &server;

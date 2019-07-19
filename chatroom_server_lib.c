@@ -1,9 +1,15 @@
 #include "chatroom_server_lib.h"
 
+/*
+	Initializes server.
+
+	@param: server --> Server struct to be filled with server data.
+
+*/
 void init_server(ServerData* server){
 
 	server->sockfd = socket(AF_INET, SOCK_STREAM, 0);
-	printf("%d\n", server->sockfd);
+	
 	if(server->sockfd == -1){
 		printf("> Socket no pudo ser creado");
 		exit(0);
@@ -24,6 +30,13 @@ void init_server(ServerData* server){
 	}
 }
 
+/*
+	Broadcasts msgs to all active clients except the one that sent msg.
+
+	@param: msg --> Msg recieved.
+	@param: client --> Sender data.
+	@param: server --> Sever data.
+*/
 void broadcast_message(char* msg, ClientData* client, ServerData* server){
 
 	char* msg_to_send = malloc(MAX_BUFFER_LENGTH);
@@ -32,7 +45,6 @@ void broadcast_message(char* msg, ClientData* client, ServerData* server){
 	strcat(msg_to_send, ": ");
 	strcat(msg_to_send, msg);
 
-	printf("%s\n", msg_to_send);
 	for(int i=0; i<server->active_connections; i++){
 		if(client->conn_id != i){
 			write(server->connections[i], msg_to_send, MAX_BUFFER_LENGTH);
@@ -42,6 +54,13 @@ void broadcast_message(char* msg, ClientData* client, ServerData* server){
 	free(msg_to_send);
 }
 
+/*
+	Executed as a thread. Manages connection with socket listening to 
+	incoming msgs and sending it to other clients.
+	
+	@param: param: Required by pthread.h. Contains all data realted to client.
+
+*/
 void* client_thread(void* param){
 
 	ClientData* client = (ClientData*) param;
@@ -67,7 +86,7 @@ void* client_thread(void* param){
 		}
 
 		broadcast_message(buffer, client, server);
-		printf("CONN %d %s: %s\n", client->conn_id, "", buffer);
+		printf("> Mensaje de %s enviado: %s\n", client->host, buffer);
 
 	}
 }

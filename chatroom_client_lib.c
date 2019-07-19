@@ -111,6 +111,7 @@ void create_chat_listener_thread(){
 
 /*
 	Updates chat view with new msg.
+	
 	@param: msg_display --> String containing msg to diplay.
 */
 void update_chat_view(char* msg_display){
@@ -278,7 +279,6 @@ void on_disconnect_btn_clicked(GtkWidget *widget, gpointer *data){
     gtk_widget_set_sensitive(GTK_WIDGET(gtk_builder_get_object(app_builder, "disconnect_menu_item")), FALSE); //Disables Disconnect btn
     gtk_widget_set_sensitive(GTK_WIDGET(gtk_builder_get_object(app_builder, "send_button")), FALSE); //Disables Send btn
 
-    printf("Connection closed\n");
 }
 
 /*
